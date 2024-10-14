@@ -17,5 +17,5 @@ func main() {
 		w.Write([]byte("Hello, world!"))
 		w.WriteHeader(200)
 	})
-	config.Server(PORT)
+	config.Server(PORT, router)
 }

@@ -15,10 +15,8 @@ type Routers struct {
 	routers []Route
 }
 
-var routers = Routers{routers: []Route{}}
-
-func getRouterHanlder(method string, route string) (http.HandlerFunc, error) {
-	for _, router := range routers.routers {
+func (r *Routers) getRouterHandler(method string, route string) (http.HandlerFunc, error) {
+	for _, router := range r.routers {
 		if router.method == method && router.route == route {
 			return router.handler, nil
 		}
@@ -27,10 +25,31 @@ func getRouterHanlder(method string, route string) (http.HandlerFunc, error) {
 }
 
 func Router() *Routers {
+	var routers = Routers{routers: []Route{}}
 	return &routers
 }
 
+func (r *Routers) register(method string, path string, handler http.HandlerFunc) {
+	router := Route{method: method, route: path, handler: handler}
+	r.routers = append(r.routers, router)
+}
+
 func (r *Routers) Get(path string, handler http.HandlerFunc) {
-	router := Route{method: "GET", route: path, handler: handler}
-	routers.routers = append(routers.routers, router)
+	r.register("GET", path, handler)
+}
+
+func (r *Routers) POST(path string, handler http.HandlerFunc) {
+	r.register("POST", path, handler)
+}
+
+func (r *Routers) PUT(path string, handler http.HandlerFunc) {
+	r.register("PUT", path, handler)
+}
+
+func (r *Routers) DELETE(path string, handler http.HandlerFunc) {
+	r.register("DELETE", path, handler)
+}
+
+func (r *Routers) PATCH(path string, handler http.HandlerFunc) {
+	r.register("PATCH", path, handler)
 }
