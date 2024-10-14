@@ -4,28 +4,24 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 )
 
 func httpHandler(w http.ResponseWriter, r *http.Request) {
 	url := r.RequestURI
 	method := r.Method
 	fmt.Println(method, url)
-	if url == "/test" && method == "GET" {
-		w.WriteHeader(200)
-		w.Write([]byte("Hello, world222222!"))
+	handler, err := getRouterHanlder(method, url)
+	if err != nil {
+		w.WriteHeader(404)
 		return
 	}
-	fmt.Println(url)
-	w.Write([]byte("Hello, world!"))
-	w.WriteHeader(400)
+	handler(w, r)
 }
 
-func Server() {
-	PORT := os.Getenv("PORT")
+func Server(port string) {
 	handler := http.HandlerFunc(httpHandler)
-	fmt.Printf("Server running %s\n", PORT)
-	if err := http.ListenAndServe(":"+PORT, handler); err != nil {
+	fmt.Printf("Server running %s\n", port)
+	if err := http.ListenAndServe(port, handler); err != nil {
 		log.Fatal(err)
 	}
 }
