@@ -8,17 +8,24 @@ import (
 	"github.com/edusantanaw/desafio_backend_with_golang/pkg/utils"
 )
 
-type IController[T interface{}] func(data T) utils.HttpResponse
+type AdapterContext struct {
+	Body   interface{}
+	Params map[string]string
+	Query  map[string]string
+}
 
-func AdapterWithBody[T comparable](controller IController[T], schema T, route string) func(w http.ResponseWriter, r *http.Request) {
+type IAdapterWithBodyController[T interface{}] func(ctx *AdapterContext) utils.HttpResponse
+
+func AdapterWithBody[T comparable](controller IAdapterWithBodyController[T], schema T, route string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		err := json.NewDecoder(r.Body).Decode(&schema)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		response := controller(schema)
 		params := buildParams(route, r.RequestURI)
+		ctx := &AdapterContext{Params: params, Body: schema}
+		response := controller(ctx)
 		body, err := json.Marshal(params)
 		if err != nil {
 			w.Write([]byte(err.Error()))
@@ -31,7 +38,9 @@ func AdapterWithBody[T comparable](controller IController[T], schema T, route st
 	}
 }
 
-func AdapterWithQuery(controller IController[map[string]string], route string) func(w http.ResponseWriter, r *http.Request) {
+type IAdapterWithQueryController[T interface{}] func(ctx *AdapterContext) utils.HttpResponse
+
+func AdapterWithQuery(controller IAdapterWithQueryController[map[string]string], route string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		queryMap := make(map[string]string)
@@ -41,9 +50,9 @@ func AdapterWithQuery(controller IController[map[string]string], route string) f
 				queryMap[key] = values[0]
 			}
 		}
-		response := controller(queryMap)
-		body, err := json.Marshal(params)
-
+		ctx := &AdapterContext{Params: params, Query: queryMap}
+		response := controller(ctx)
+		body, err := json.Marshal(response.Body)
 		if err != nil {
 			w.Write([]byte(err.Error()))
 			w.WriteHeader(500)
@@ -62,10 +71,11 @@ func buildParams(route string, routerRoute string) map[string]string {
 	return params
 }
 
-func filterAndBind(slice []string, bind []string, filterHanlder func(v string, e string) bool, equals string) map[string]string {
+type IFilter func(v string, e string) bool
+
+func filterAndBind(slice []string, bind []string, filterHanlder IFilter, equals string) map[string]string {
 	res := make(map[string]string)
 	for key, value := range slice {
-		println(1, value)
 		if filterHanlder(value, equals) {
 			println(key, value, bind[key])
 			res[strings.Replace(value, ":", "", 1)] = bind[key]
