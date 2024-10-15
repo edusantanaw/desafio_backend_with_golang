@@ -26,7 +26,7 @@ func AdapterWithBody[T comparable](controller IAdapterWithBodyController[T], sch
 		params := buildParams(route, r.RequestURI)
 		ctx := &AdapterContext{Params: params, Body: schema}
 		response := controller(ctx)
-		body, err := json.Marshal(params)
+		body, err := json.Marshal(response.Body)
 		if err != nil {
 			w.Write([]byte(err.Error()))
 			w.WriteHeader(500)
