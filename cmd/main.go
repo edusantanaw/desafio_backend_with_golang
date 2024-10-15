@@ -17,5 +17,13 @@ func main() {
 		w.Write([]byte("Hello, world!"))
 		w.WriteHeader(200)
 	})
+	router.Get("/test/hello", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("Hello, with hello!"))
+		w.WriteHeader(200)
+	})
+	router.Get("/test/:id", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("Hello, with id!"))
+		w.WriteHeader(200)
+	})
 	config.Server(PORT, router)
 }

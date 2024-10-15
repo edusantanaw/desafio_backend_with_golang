@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"net/http"
+	"strings"
 )
 
 type Route struct {
@@ -17,7 +18,24 @@ type Routers struct {
 
 func (r *Routers) getRouterHandler(method string, route string) (http.HandlerFunc, error) {
 	for _, router := range r.routers {
-		if router.method == method && router.route == route {
+		if router.method != method {
+			continue
+		}
+		paths := strings.Split(router.route, "/")
+		routePaths := strings.Split(route, "/")
+		if len(paths) != len(routePaths) {
+			continue
+		}
+		diff := false
+		for i := range paths {
+			if strings.HasPrefix(paths[i], ":") {
+				continue
+			}
+			if paths[i] != routePaths[i] {
+				diff = true
+			}
+		}
+		if !diff {
 			return router.handler, nil
 		}
 	}
