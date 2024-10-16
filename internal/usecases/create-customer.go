@@ -22,11 +22,11 @@ func CreateCustomer(data schema.CustomerSchema) (*entities.Customer, error) {
 	if verifyCpfCnpj != nil {
 		return nil, errors.New("cpf/cnpj ja esta em uso")
 	}
-	encrypterPass, err := utils.Encrypt(os.Getenv("SECRET"), data.Pass)
+	encrypterPass, err := utils.Encrypt(data.Pass, os.Getenv("SECRET"))
 	if err != nil {
 		return nil, errors.New("encrypter failed")
 	}
-	customer := &entities.Customer{Name: data.Name, Email: data.Email, Id: uuid.New().String(), Password: encrypterPass}
+	customer := &entities.Customer{Name: data.Name, Email: data.Email, Id: uuid.New().String(), Password: encrypterPass, CPF_CNPJ: data.CPF_CNPJ}
 	customerRepository.Create(*customer)
 	return customer, nil
 }

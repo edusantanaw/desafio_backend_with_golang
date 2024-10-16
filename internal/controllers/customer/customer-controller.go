@@ -14,3 +14,8 @@ func Create(ctx *adapter.AdapterContext[schema.CustomerSchema]) utils.HttpRespon
 	}
 	return utils.HttpResponse{Code: 200, Body: customer}
 }
+
+func FindAll(ctc *adapter.GetAdapterContext) utils.HttpResponse {
+	customers := usecases.FindAllCustomer()
+	return utils.HttpResponse{Code: 200, Body: customers}
+}

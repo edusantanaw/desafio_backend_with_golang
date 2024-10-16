@@ -33,8 +33,8 @@ func AdapterWithBody[T comparable](controller IAdapterWithBodyController[T], sch
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
-		w.Write(body)
 		w.WriteHeader(response.Code)
+		w.Write(body)
 	}
 }
 
@@ -64,8 +64,8 @@ func AdapterWithQuery(controller IAdapterWithQueryController[map[string]string],
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
-		w.Write(body)
 		w.WriteHeader(response.Code)
+		w.Write(body)
 	}
 }
 

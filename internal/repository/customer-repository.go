@@ -19,6 +19,10 @@ func GetRepository() *CustomerRepository {
 
 type IFilter func(v string, e string) bool
 
+func (r *CustomerRepository) FindAll() []entities.Customer {
+	return r.items
+}
+
 func (r *CustomerRepository) FindById(id string) *entities.Customer {
 	for _, customer := range r.items {
 		if customer.Id == id {

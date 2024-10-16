@@ -4,44 +4,90 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/base64"
 	"errors"
-	"fmt"
 	"io"
+
+	"golang.org/x/crypto/pbkdf2"
 )
 
-func Decrypt(secret, value string) (string, error) {
-	ciphertext, err := base64.RawStdEncoding.DecodeString(value)
-	if err != nil {
-		return "", fmt.Errorf("decoding base64: %w", err)
-	}
-	block, err := aes.NewCipher([]byte(secret))
-	if err != nil {
-		return "", err
-	}
-	if len(ciphertext) < aes.BlockSize {
-		return "", errors.New("ciphertext too short")
-	}
-	iv := ciphertext[:aes.BlockSize]
-	ciphertext = ciphertext[aes.BlockSize:]
+const saltSize = 16
+const keySize = 32
+const iterations = 100000
 
-	stream := cipher.NewCFBDecrypter(block, iv)
-	stream.XORKeyStream(ciphertext, ciphertext)
-	return string(ciphertext), nil
+func deriveKey(secret string, salt []byte) []byte {
+	return pbkdf2.Key([]byte(secret), salt, iterations, keySize, sha256.New)
 }
 
-func Encrypt(secret, value string) (string, error) {
-	block, err := aes.NewCipher([]byte(secret))
+func generateSalt() ([]byte, error) {
+	salt := make([]byte, saltSize)
+	if _, err := rand.Read(salt); err != nil {
+		return nil, err
+	}
+	return salt, nil
+}
+
+func Encrypt(plainText, secret string) (string, error) {
+	salt, err := generateSalt()
 	if err != nil {
 		return "", err
 	}
-	plainText := []byte(value)
-	ciphertext := make([]byte, aes.BlockSize+len(plainText))
-	iv := ciphertext[:aes.BlockSize]
-	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
+
+	key := deriveKey(secret, salt)
+	block, err := aes.NewCipher(key)
+	if err != nil {
 		return "", err
 	}
-	stream := cipher.NewCFBEncrypter(block, iv)
-	stream.XORKeyStream(ciphertext[aes.BlockSize:], plainText)
-	return base64.RawStdEncoding.EncodeToString(ciphertext), nil
+
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", err
+	}
+
+	nonce := make([]byte, gcm.NonceSize())
+	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
+		return "", err
+	}
+
+	cipherText := gcm.Seal(nonce, nonce, []byte(plainText), nil)
+	finalData := append(salt, cipherText...) // Salt + CipherText
+	return base64.StdEncoding.EncodeToString(finalData), nil
+}
+
+func Decrypt(encryptedText, secret string) (string, error) {
+	data, err := base64.StdEncoding.DecodeString(encryptedText)
+	if err != nil {
+		return "", err
+	}
+
+	if len(data) < saltSize {
+		return "", errors.New("invalid encrypted text")
+	}
+
+	salt, cipherData := data[:saltSize], data[saltSize:]
+	key := deriveKey(secret, salt)
+
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return "", err
+	}
+
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", err
+	}
+
+	nonceSize := gcm.NonceSize()
+	if len(cipherData) < nonceSize {
+		return "", errors.New("invalid encrypted text")
+	}
+
+	nonce, cipherText := cipherData[:nonceSize], cipherData[nonceSize:]
+	plainText, err := gcm.Open(nil, nonce, cipherText, nil)
+	if err != nil {
+		return "", err
+	}
+
+	return string(plainText), nil
 }

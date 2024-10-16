@@ -9,4 +9,6 @@ import (
 
 func CustomerRouter(router *config.Routers) {
 	router.POST("/api/customer", adapter.AdapterWithBody(customer.Create, schema.CustomerSchema{}, "/api/customer"))
+	router.Get("/api/customer", adapter.AdapterWithQuery(customer.FindAll, "/api/customer"))
+
 }
