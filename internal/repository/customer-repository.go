@@ -54,7 +54,7 @@ func (r *CustomerRepository) Create(customer entities.Customer) *entities.Custom
 func (r *CustomerRepository) Update(customer entities.Customer) (*entities.Customer, error) {
 	exists := slices.Contains(r.items, customer)
 	if !exists {
-		return nil, errors.New("Not found!")
+		return nil, errors.New("not found")
 	}
 	r.updateList(customer)
 	return &customer, nil
