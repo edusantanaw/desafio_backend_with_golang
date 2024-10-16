@@ -2,10 +2,12 @@ package usecases
 
 import (
 	"errors"
+	"os"
 
 	"github.com/edusantanaw/desafio_backend_with_golang/internal/controllers/schema"
 	"github.com/edusantanaw/desafio_backend_with_golang/internal/entities"
 	"github.com/edusantanaw/desafio_backend_with_golang/internal/repository"
+	"github.com/edusantanaw/desafio_backend_with_golang/pkg/utils"
 
 	"github.com/google/uuid"
 )
@@ -20,7 +22,11 @@ func CreateCustomer(data schema.CustomerSchema) (*entities.Customer, error) {
 	if verifyCpfCnpj != nil {
 		return nil, errors.New("cpf/cnpj ja esta em uso")
 	}
-	customer := &entities.Customer{Name: data.Name, Email: data.Email, Id: uuid.New().String()}
+	encrypterPass, err := utils.Encrypt(os.Getenv("SECRET"), data.Pass)
+	if err != nil {
+		return nil, errors.New("encrypter failed")
+	}
+	customer := &entities.Customer{Name: data.Name, Email: data.Email, Id: uuid.New().String(), Password: encrypterPass}
 	customerRepository.Create(*customer)
 	return customer, nil
 }

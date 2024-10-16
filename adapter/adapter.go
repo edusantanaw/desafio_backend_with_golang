@@ -8,13 +8,13 @@ import (
 	"github.com/edusantanaw/desafio_backend_with_golang/pkg/utils"
 )
 
-type AdapterContext struct {
-	Body   interface{}
+type AdapterContext[T comparable] struct {
+	Body   T
 	Params map[string]string
 	Query  map[string]string
 }
 
-type IAdapterWithBodyController[T interface{}] func(ctx *AdapterContext) utils.HttpResponse
+type IAdapterWithBodyController[T comparable] func(ctx *AdapterContext[T]) utils.HttpResponse
 
 func AdapterWithBody[T comparable](controller IAdapterWithBodyController[T], schema T, route string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -24,7 +24,7 @@ func AdapterWithBody[T comparable](controller IAdapterWithBodyController[T], sch
 			return
 		}
 		params := buildParams(route, r.RequestURI)
-		ctx := &AdapterContext{Params: params, Body: schema}
+		ctx := &AdapterContext[T]{Params: params, Body: schema}
 		response := controller(ctx)
 		body, err := json.Marshal(response.Body)
 		if err != nil {
@@ -38,7 +38,12 @@ func AdapterWithBody[T comparable](controller IAdapterWithBodyController[T], sch
 	}
 }
 
-type IAdapterWithQueryController[T interface{}] func(ctx *AdapterContext) utils.HttpResponse
+type GetAdapterContext struct {
+	Params map[string]string
+	Query  map[string]string
+}
+
+type IAdapterWithQueryController[T interface{}] func(ctx *GetAdapterContext) utils.HttpResponse
 
 func AdapterWithQuery(controller IAdapterWithQueryController[map[string]string], route string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -50,7 +55,7 @@ func AdapterWithQuery(controller IAdapterWithQueryController[map[string]string],
 				queryMap[key] = values[0]
 			}
 		}
-		ctx := &AdapterContext{Params: params, Query: queryMap}
+		ctx := &GetAdapterContext{Params: params, Query: queryMap}
 		response := controller(ctx)
 		body, err := json.Marshal(response.Body)
 		if err != nil {
