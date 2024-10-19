@@ -6,7 +6,7 @@ import (
 )
 
 func FindCustomerById(id string) *entities.Customer {
-	customerRepository := repository.GetRepository()
+	customerRepository := repository.GetRepositoryInMemory()
 	customer := customerRepository.FindById(id)
 	return customer
 }

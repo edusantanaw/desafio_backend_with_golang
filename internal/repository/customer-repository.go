@@ -1,77 +1,41 @@
 package repository
 
 import (
+	"context"
 	"fmt"
-	"slices"
+	"time"
 
+	"github.com/edusantanaw/desafio_backend_with_golang/cmd/db"
 	"github.com/edusantanaw/desafio_backend_with_golang/internal/entities"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type CustomerRepository struct {
-	items []entities.Customer
+type Repository struct {
+	conn *pgxpool.Pool
 }
 
-var repository = &CustomerRepository{items: make([]entities.Customer, 0)}
-
-func GetRepository() *CustomerRepository {
+func GetCustomerRepository() *Repository {
+	conn := db.GetConnection()
+	repository := &Repository{conn: conn.Pool}
 	return repository
 }
 
-type IFilter func(v string, e string) bool
-
-func (r *CustomerRepository) FindAll() []entities.Customer {
-	return r.items
+func (r *Repository) Create(data *entities.Customer) (*entities.Customer, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	_, err := r.conn.Exec(ctx, "INSERT INTO customers(id, name, email, cpf_cnpj) VALUES ($1, $2, $3, $4);", data.Id, data.Name, data.Email, data.CPF_CNPJ)
+	if err != nil {
+		return nil, fmt.Errorf("error ao criar usario!")
+	}
+	return data, nil
 }
 
-func (r *CustomerRepository) FindById(id string) *entities.Customer {
-	for _, customer := range r.items {
-		if customer.Id == id {
-			return &customer
-		}
-	}
+func (r *Repository) FindByEmail(email string) *entities.Customer {
+
 	return nil
 }
 
-func (r *CustomerRepository) FindByEmail(email string) *entities.Customer {
-	for _, customer := range r.items {
-		if customer.Email == email {
-			return &customer
-		}
-	}
+func (r *Repository) FindByCpfCnpj(cpfCnpj string) *entities.Customer {
+
 	return nil
-}
-
-func (r *CustomerRepository) FindByCpfCnpj(cpfCnpj string) *entities.Customer {
-	for _, customer := range r.items {
-		if customer.CPF_CNPJ == cpfCnpj {
-			return &customer
-		}
-	}
-	return nil
-}
-
-func (r *CustomerRepository) Create(customer entities.Customer) *entities.Customer {
-	r.items = append(r.items, customer)
-	return &customer
-}
-
-func (r *CustomerRepository) Update(customer entities.Customer) (*entities.Customer, error) {
-	exists := slices.Contains(r.items, customer)
-	if !exists {
-		return nil, fmt.Errorf("not found")
-	}
-	r.updateList(customer)
-	return &customer, nil
-}
-
-func (r *CustomerRepository) updateList(customer entities.Customer) {
-	updatedList := make([]entities.Customer, 0)
-	for _, c := range r.items {
-		if c.Id == customer.Id {
-			updatedList = append(updatedList, customer)
-			continue
-		}
-		updatedList = append(updatedList, c)
-	}
-	r.items = updatedList
 }

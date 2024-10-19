@@ -6,7 +6,7 @@ import (
 )
 
 func FindAllCustomer() []entities.Customer {
-	customerRepository := repository.GetRepository()
+	customerRepository := repository.GetRepositoryInMemory()
 	customers := customerRepository.FindAll()
 	return customers
 }
