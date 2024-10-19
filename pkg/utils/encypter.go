@@ -6,7 +6,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
-	"errors"
+	"fmt"
 	"io"
 
 	"golang.org/x/crypto/pbkdf2"
@@ -62,7 +62,7 @@ func Decrypt(encryptedText, secret string) (string, error) {
 	}
 
 	if len(data) < saltSize {
-		return "", errors.New("invalid encrypted text")
+		return "", fmt.Errorf("invalid encrypted text")
 	}
 
 	salt, cipherData := data[:saltSize], data[saltSize:]
@@ -80,7 +80,7 @@ func Decrypt(encryptedText, secret string) (string, error) {
 
 	nonceSize := gcm.NonceSize()
 	if len(cipherData) < nonceSize {
-		return "", errors.New("invalid encrypted text")
+		return "", fmt.Errorf("invalid encrypted text")
 	}
 
 	nonce, cipherText := cipherData[:nonceSize], cipherData[nonceSize:]
