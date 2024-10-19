@@ -9,4 +9,5 @@ import (
 func CustomerRouter(router *http.ServeMux) {
 	router.HandleFunc("POST /api/customer", customer.Create)
 	router.HandleFunc("/api/customer", customer.FindAll)
+	router.HandleFunc("/api/customer/{id}", customer.FinById)
 }

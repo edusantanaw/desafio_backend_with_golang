@@ -5,8 +5,8 @@ import (
 	"github.com/edusantanaw/desafio_backend_with_golang/internal/repository"
 )
 
-func FindAllCustomer() []entities.Customer {
+func FindCustomerById(id string) *entities.Customer {
 	customerRepository := repository.GetRepository()
-	customers := customerRepository.FindAll()
-	return customers
+	customer := customerRepository.FindById(id)
+	return customer
 }

@@ -26,7 +26,8 @@ func CreateCustomer(data schema.CustomerSchema) (*entities.Customer, error) {
 	if err != nil {
 		return nil, errors.New("encrypter failed")
 	}
-	customer := &entities.Customer{Name: data.Name, Email: data.Email, Id: uuid.New().String(), Password: encrypterPass, CPF_CNPJ: data.CPF_CNPJ}
+	customer := &entities.Customer{Name: data.Name, Email: data.Email, Id: uuid.New().String(), CPF_CNPJ: data.CPF_CNPJ}
+	customer.SetPassword(encrypterPass)
 	customerRepository.Create(*customer)
 	return customer, nil
 }
