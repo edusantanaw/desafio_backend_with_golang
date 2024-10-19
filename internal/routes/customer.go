@@ -1,14 +1,12 @@
 package routes
 
 import (
-	"github.com/edusantanaw/desafio_backend_with_golang/adapter"
-	"github.com/edusantanaw/desafio_backend_with_golang/cmd/config"
+	"net/http"
+
 	"github.com/edusantanaw/desafio_backend_with_golang/internal/controllers/customer"
-	"github.com/edusantanaw/desafio_backend_with_golang/internal/controllers/schema"
 )
 
-func CustomerRouter(router *config.Routers) {
-	router.POST("/api/customer", adapter.AdapterWithBody(customer.Create, schema.CustomerSchema{}, "/api/customer"))
-	router.Get("/api/customer", adapter.AdapterWithQuery(customer.FindAll, "/api/customer"))
-
+func CustomerRouter(router *http.ServeMux) {
+	router.HandleFunc("POST /api/customer", customer.Create)
+	router.HandleFunc("/api/customer", customer.FindAll)
 }

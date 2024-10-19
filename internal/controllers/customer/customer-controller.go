@@ -1,21 +1,52 @@
 package customer
 
 import (
-	"github.com/edusantanaw/desafio_backend_with_golang/adapter"
+	"encoding/json"
+	"io"
+	"net/http"
+
 	"github.com/edusantanaw/desafio_backend_with_golang/internal/controllers/schema"
 	"github.com/edusantanaw/desafio_backend_with_golang/internal/usecases"
-	"github.com/edusantanaw/desafio_backend_with_golang/pkg/utils"
 )
 
-func Create(ctx *adapter.AdapterContext[schema.CustomerSchema]) utils.HttpResponse {
-	customer, err := usecases.CreateCustomer(ctx.Body)
-	if err != nil {
-		return utils.HttpResponse{Code: 400, Body: err.Error()}
+func Create(res http.ResponseWriter, req *http.Request) {
+	body, err := io.ReadAll(req.Body)
+	if err != nil || len(body) == 0 {
+		http.Error(res, "Invalid or empty request body", http.StatusBadRequest)
+		return
 	}
-	return utils.HttpResponse{Code: 200, Body: customer}
+	defer req.Body.Close()
+	var customerBody schema.CustomerSchema
+	if err := json.Unmarshal(body, &customerBody); err != nil {
+		http.Error(res, "Invalid JSON format", http.StatusBadRequest)
+		return
+	}
+	customer, err := usecases.CreateCustomer(customerBody)
+	if err != nil {
+		res.Write([]byte(err.Error()))
+		res.WriteHeader(400)
+		return
+	}
+	response, err := json.Marshal(customer)
+	if err != nil {
+		res.Write([]byte(err.Error()))
+		res.WriteHeader(500)
+		return
+	}
+	res.Header().Set("Content-Type", "application/json")
+	res.WriteHeader(200)
+	res.Write(response)
 }
 
-func FindAll(ctc *adapter.GetAdapterContext) utils.HttpResponse {
+func FindAll(res http.ResponseWriter, req *http.Request) {
 	customers := usecases.FindAllCustomer()
-	return utils.HttpResponse{Code: 200, Body: customers}
+	body, err := json.Marshal(customers)
+	if err != nil {
+		res.Write([]byte(err.Error()))
+		res.WriteHeader(500)
+		return
+	}
+	res.Header().Set("Content-Type", "application/json")
+	res.WriteHeader(200)
+	res.Write(body)
 }

@@ -1,8 +1,8 @@
 package schema
 
 type CustomerSchema struct {
-	Name     string
-	Pass     string
-	Email    string
-	CPF_CNPJ string
+	Name     string `json:"name"`
+	Pass     string `json:"pass"`
+	Email    string `json:"email"`
+	CPF_CNPJ string `json:"cpf_cnpj"`
 }
